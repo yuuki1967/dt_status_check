@@ -1,0 +1,56 @@
+{
+  "endpoints": {
+    "status": "/status",
+    "network": "/network",
+    "subnets": "/subnets"
+  },
+  "paths": {
+    "appliance_status": [
+      "status",
+      "systemStatus",
+      "applianceStatus"
+    ],
+    "cpu_usage": [
+      "cpuUsage",
+      "cpu_usage",
+      "system.cpuUsage"
+    ],
+    "memory_usage": [
+      "memoryUsage",
+      "memory_usage",
+      "system.memoryUsage"
+    ],
+    "license_ip_addresses": [
+      "licenseIpAddresses",
+      "licensedIpAddresses",
+      "license.ipAddresses",
+      "license.ipCount"
+    ],
+    "interfaces": [
+      "interfaces",
+      "networkInterfaces",
+      "$"
+    ],
+    "interface_name": [
+      "name",
+      "interface",
+      "device"
+    ],
+    "interface_status": [
+      "status",
+      "state",
+      "linkState"
+    ],
+    "received_bytes": [
+      "receivedBytes",
+      "rxBytes",
+      "statistics.receivedBytes",
+      "statistics.rxBytes"
+    ],
+    "subnets": [
+      "subnets",
+      "count",
+      "$"
+    ]
+  }
+}
