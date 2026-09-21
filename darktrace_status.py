@@ -22,15 +22,15 @@ from typing import Any, Iterable, Mapping, Sequence
 
 
 CSV_FIELDS = [
-    "timestamp_utc",
+    "time",
     "appliance_status",
-    "cpu_usage_percent",
-    "memory_usage_percent",
+    "cpu_percent",
+    "memoryUsed_percent",
     "interface_name",
     "interface_status",
     "received_bytes",
     "received_bandwidth_bps",
-    "license_ip_addresses",
+    "licenseIPCount",
     "subnet_count",
 ]
 
@@ -305,19 +305,19 @@ def collect_rows(
         )
     )
     cpu = _as_number(
-        _first_value(status_response, _path_list(paths, "cpu_usage"), "CPU usage"),
+        _first_value(status_response, _path_list(paths, "cpu"), "CPU usage"),
         "CPU usage",
     )
     memory = _as_number(
         _first_value(
-            status_response, _path_list(paths, "memory_usage"), "memory usage"
+            status_response, _path_list(paths, "memoryUsed"), "memory usage"
         ),
         "memory usage",
     )
     license_ips = _as_number(
         _first_value(
             status_response,
-            _path_list(paths, "license_ip_addresses"),
+            _path_list(paths, "licenseIPCount"),
             "licensed IP address count",
         ),
         "licensed IP address count",
@@ -336,15 +336,15 @@ def collect_rows(
     subnet_count = _subnet_count(subnet_response, paths)
     return [
         {
-            "timestamp_utc": timestamp,
+            "time": timestamp,
             "appliance_status": appliance_status,
-            "cpu_usage_percent": _display_number(cpu),
-            "memory_usage_percent": _display_number(memory),
-            "interface_name": interface.name,
+            "cpu_percent": _display_number(cpu),
+            "memoryUsed_percent": _display_number(memory),
+            "networkInterfaceState_eth0": interface.name,
             "interface_status": interface.status,
             "received_bytes": _display_number(interface.received_bytes),
             "received_bandwidth_bps": round(bandwidth[interface.name], 3),
-            "license_ip_addresses": int(license_ips),
+            "licenseIPCount": int(license_ips),
             "subnet_count": subnet_count,
         }
         for interface in second_network

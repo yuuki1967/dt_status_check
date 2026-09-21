@@ -78,3 +78,48 @@ Ensure the scheduler receives the three `DARKTRACE_*` environment variables.
 ```sh
 python3 -m unittest -v
 ```
+
+## Check the API /status
+
+1. http://<HOSTNAME>/status?format=json
+2.  jq '.time,.hostname,.licenseCounts.licenseIPCount,.subnets,.bandwidthAverage,.darkflowQueue,.subnetData[].recentUnidirectionalTrafficPercent' ./sampledata1.json
+3. here are the result.
+"2026-09-20 02:27"
+"dt-50488-01"
+841
+32
+398518000
+-1
+1
+0
+0
+1
+0
+0
+25
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+ jq '.time,.hostname,.licenseCounts.licenseIPCount,.subnets,.bandwidthAverage,.darkflowQueue,.probes[].hostname,.probes[].metadata.interfaces[].name,.probes[].metadata.interfaces[].type,.probes[].metadata.interfaces[]."link-up",.probes[].networkInterfacesState_eth1,.probes[].networkInterfacesReceived_eth2' ../sampledata1.json 
