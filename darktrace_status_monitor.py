@@ -25,11 +25,14 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import requests
+import math
+import re
 
 ENDPOINT = "/status?format=json"
 CSV_FIELDS = [
     "time",
     "hostname",
+    "type",
     "licenseIPCount",
     "subnets",
     "bandwidthAverage",
@@ -37,6 +40,60 @@ CSV_FIELDS = [
     "recentUnidirectionalTrafficPercent",
     "recentUnidirectionalTrafficPercentAverage",
     "recentUnidirectionalTrafficPercentMaximum",
+    "probes[1].hostname",
+    "probes[1].type",
+    "probes[1].networkInterfacesReceived_eth1",
+    "probes[1].networkInterfacesReceived_eth2",
+    "probes[1].networkInterfacesReceived_eth3",
+    "probes[1].networkInterfacesReceived_eth4",
+    "probes[1].networkInterfacesReceived_eth5",
+    "probes[1].networkInterfacesReceived_eth6",
+    "probes[1].networkInterfacesReceived_eth7",
+    "probes[2].hostname",
+    "probes[2].type",
+    "probes[2].networkInterfacesReceived_eth1",
+    "probes[2].networkInterfacesReceived_eth2",
+    "probes[2].networkInterfacesReceived_eth3",
+    "probes[2].networkInterfacesReceived_eth4",
+    "probes[2].networkInterfacesReceived_eth5",
+    "probes[2].networkInterfacesReceived_eth6",
+    "probes[2].networkInterfacesReceived_eth7",
+    "probes[3].hostname",
+    "probes[3].type",
+    "probes[3].networkInterfacesReceived_eth1",
+    "probes[3].networkInterfacesReceived_eth2",
+    "probes[3].networkInterfacesReceived_eth3",
+    "probes[3].networkInterfacesReceived_eth4",
+    "probes[3].networkInterfacesReceived_eth5",
+    "probes[3].networkInterfacesReceived_eth6",
+    "probes[3].networkInterfacesReceived_eth7",
+    "probes[4].hostname",
+    "probes[4].type",
+    "probes[4].networkInterfacesReceived_eth1",
+    "probes[4].networkInterfacesReceived_eth2",
+    "probes[4].networkInterfacesReceived_eth3",
+    "probes[4].networkInterfacesReceived_eth4",
+    "probes[4].networkInterfacesReceived_eth5",
+    "probes[4].networkInterfacesReceived_eth6",
+    "probes[4].networkInterfacesReceived_eth7",
+    "probes[5].hostname",
+    "probes[5].type",
+    "probes[5].networkInterfacesReceived_eth1",
+    "probes[5].networkInterfacesReceived_eth2",
+    "probes[5].networkInterfacesReceived_eth3",
+    "probes[5].networkInterfacesReceived_eth4",
+    "probes[5].networkInterfacesReceived_eth5",
+    "probes[5].networkInterfacesReceived_eth6",
+    "probes[5].networkInterfacesReceived_eth7",
+    "probes[6].hostname",
+    "probes[6].type",
+    "probes[6].networkInterfacesReceived_eth1",
+    "probes[6].networkInterfacesReceived_eth2",
+    "probes[6].networkInterfacesReceived_eth3",
+    "probes[6].networkInterfacesReceived_eth4",
+    "probes[6].networkInterfacesReceived_eth5",
+    "probes[6].networkInterfacesReceived_eth6",
+    "probes[6].networkInterfacesReceived_eth7",
 ]
 
 
@@ -55,7 +112,6 @@ def build_headers(endpoint: str, public_token: str, private_token: str) -> dict[
         "DTAPI-Signature": signature,
         "Accept": "application/json",
     }
-
 
 def get_status(
     host: str,
@@ -78,7 +134,6 @@ def get_status(
         raise ValueError("The /status response was not a JSON object")
     return data
 
-
 def to_number(value: Any) -> float | int | None:
     if value in (None, ""):
         return None
@@ -87,7 +142,6 @@ def to_number(value: Any) -> float | int | None:
         return int(number) if number.is_integer() else number
     except (TypeError, ValueError):
         return None
-
 
 def extract_row(data: dict[str, Any]) -> dict[str, Any]:
     subnet_data = data.get("subnetData") or []
@@ -103,10 +157,12 @@ def extract_row(data: dict[str, Any]) -> dict[str, Any]:
 
     average = sum(percentages) / len(percentages) if percentages else None
     maximum = max(percentages) if percentages else None
-
-    return {
+   
+    probes = data["probes"] 
+    row={
         "time": data.get("time") or datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
-        "hostname": data.get("hostname", ""),
+        "hostname": data.get("hostname",""),
+        "type": data.get("type",""),
         "licenseIPCount": (data.get("licenseCounts") or {}).get("licenseIPCount", ""),
         "subnets": data.get("subnets", ""),
         "bandwidthAverage": data.get("bandwidthAverage", ""),
@@ -115,9 +171,21 @@ def extract_row(data: dict[str, Any]) -> dict[str, Any]:
         "recentUnidirectionalTrafficPercentAverage": "" if average is None else round(average, 4),
         "recentUnidirectionalTrafficPercentMaximum": "" if maximum is None else maximum,
     }
+    for i,probe in data["probes"].items():
+        row["probes["+str(probe.get("id"))+"].hostname"] = probe.get("hostname")
+        row["probes["+str(probe.get("id"))+"].type"] = probe.get("type")
+        row["probes["+str(probe.get("id"))+"].networkInterfacesReceived_eth1"] = probe.get("networkInterfacesReceived_eth1")
+        row["probes["+str(probe.get("id"))+"].networkInterfacesReceived_eth2"] = probe.get("networkInterfacesReceived_eth2")
+        row["probes["+str(probe.get("id"))+"].networkInterfacesReceived_eth3"] = probe.get("networkInterfacesReceived_eth3")
+        row["probes["+str(probe.get("id"))+"].networkInterfacesReceived_eth4"] = probe.get("networkInterfacesReceived_eth4")
+        row["probes["+str(probe.get("id"))+"].networkInterfacesReceived_eth5"] = probe.get("networkInterfacesReceived_eth5")
+        row["probes["+str(probe.get("id"))+"].networkInterfacesReceived_eth6"] = probe.get("networkInterfacesReceived_eth6")
+        row["probes["+str(probe.get("id"))+"].networkInterfacesReceived_eth7"] = probe.get("networkInterfacesReceived_eth7")
+    print(row)
+    
+    return row
 
-
-def append_csv(csv_path: Path, row: dict[str, Any]) -> None:
+def append_csv(csv_path: Path, row: dict[str,Any]) -> None:
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     write_header = not csv_path.exists() or csv_path.stat().st_size == 0
     with csv_path.open("a", newline="", encoding="utf-8") as handle:
@@ -126,11 +194,9 @@ def append_csv(csv_path: Path, row: dict[str, Any]) -> None:
             writer.writeheader()
         writer.writerow(row)
 
-
 def read_history(csv_path: Path) -> list[dict[str, str]]:
     with csv_path.open("r", newline="", encoding="utf-8-sig") as handle:
         return list(csv.DictReader(handle))
-
 
 def parse_time(value: str) -> datetime | None:
     for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
@@ -143,90 +209,322 @@ def parse_time(value: str) -> datetime | None:
     except ValueError:
         return None
 
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 def create_graph(csv_path: Path, graph_path: Path) -> None:
     rows = read_history(csv_path)
-    parsed = [(parse_time(row.get("time", "")), row) for row in rows]
-    parsed = [(timestamp, row) for timestamp, row in parsed if timestamp is not None]
+
+    parsed = [
+        (parse_time(row.get("time", "")), row)
+        for row in rows
+    ]
+
+    parsed = [
+        (timestamp, row)
+        for timestamp, row in parsed
+        if timestamp is not None
+    ]
+
     if not parsed:
-        raise ValueError("No valid timestamps were found in the CSV file")
+        raise ValueError(
+            "No valid timestamps were found in the CSV file"
+        )
 
-    times = [item[0] for item in parsed]
+    # A multi-page output must be a PDF file.
+    if graph_path.suffix.lower() != ".pdf":
+        graph_path = graph_path.with_suffix(".pdf")
 
-    def series(field: str, divisor: float = 1.0) -> list[float]:
-        output = []
+    graph_path.parent.mkdir(parents=True, exist_ok=True)
+
+    times = [timestamp for timestamp, _ in parsed]
+
+    def series(
+        field: str,
+        divisor: float = 1.0
+    ) -> list[float]:
+        output: list[float] = []
+
         for _, row in parsed:
             value = to_number(row.get(field))
-            output.append(float("nan") if value is None else float(value) / divisor)
+
+            if value is None:
+                output.append(float("nan"))
+            else:
+                output.append(float(value) / divisor)
         return output
 
-    fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
-    hostname = parsed[-1][1].get("hostname") or "Darktrace"
-    fig.suptitle(f"{hostname} /status history")
+    def has_numeric_data(values: list[float]) -> bool:
+        return any(not math.isnan(value) for value in values)
 
-    axes[0].plot(times, series("bandwidthAverage", 1_000_000), marker="o")
-    axes[0].set_ylabel("Average bandwidth (Mbps)")
-    axes[0].grid(True)
+    def text_series(field: str) -> list[str]:
+        output: list[str] = []
 
-    axes[1].plot(times, series("darkflowQueue"), marker="o", label="Darkflow queue (s)")
-    axes[1].plot(times, series("recentUnidirectionalTrafficPercentAverage"), marker="o", label="Unidirectional avg (%)")
-    axes[1].plot(times, series("recentUnidirectionalTrafficPercentMaximum"), marker="o", label="Unidirectional max (%)")
-    axes[1].set_ylabel("Queue / traffic percentage")
-    axes[1].legend()
-    axes[1].grid(True)
+        for _, row in parsed:
+            value = row.get(field)
 
-    axes[2].plot(times, series("licenseIPCount"), marker="o", label="Licensed IP count")
-    axes[2].plot(times, series("subnets"), marker="o", label="Subnets")
-    axes[2].set_ylabel("Count")
-    axes[2].set_xlabel("Darktrace server time (UTC)")
-    axes[2].legend()
-    axes[2].grid(True)
+            if value is not None and str(value).strip():
+                output.append(str(value).strip())
 
-    fig.autofmt_xdate()
-    fig.tight_layout()
-    graph_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(graph_path, dpi=150, bbox_inches="tight")
-    plt.close(fig)
+        return output
 
+    def find_probe_indices() -> list[int]:
+        """
+        Detect probe indices from flattened CSV column names such as:
+
+        probes[0].hostname
+        probes[0].networkInterfacesReceived_eth1
+        probes[1].hostname
+        """
+
+        probe_pattern = re.compile(r"^probes\[(\d+)\]\.")
+
+        indices: set[int] = set()
+
+        for _, row in parsed:
+            for field_name in row:
+                match = probe_pattern.match(field_name)
+
+                if match:
+                    indices.add(int(match.group(1)))
+
+        return sorted(indices)
+
+    probe_indices = find_probe_indices()
+
+    with PdfPages(graph_path) as pdf:
+        # ========================================================
+        # Page 1: Main appliance status
+        # ========================================================
+
+        fig, axes = plt.subplots(
+            3,
+            1,
+            figsize=(12, 10),
+            sharex=True
+        )
+
+        hostname = (
+            parsed[-1][1].get("hostname")
+            or "Darktrace"
+        )
+
+        fig.suptitle(f"{hostname} /status history")
+
+        axes[0].plot(
+            times,
+            series("bandwidthAverage", 1_000_000),
+            marker="o"
+        )
+        axes[0].set_ylabel("Average bandwidth (Mbps)")
+        axes[0].grid(True)
+
+        axes[1].plot(
+            times,
+            series("darkflowQueue"),
+            marker="o",
+            label="Darkflow queue (s)"
+        )
+
+        axes[1].plot(
+            times,
+            series(
+                "recentUnidirectionalTrafficPercentAverage"
+            ),
+            marker="x",
+            label="Unidirectional average (%)"
+        )
+
+        axes[1].plot(
+            times,
+            series(
+                "recentUnidirectionalTrafficPercentMaximum"
+            ),
+            marker="+",
+            label="Unidirectional maximum (%)"
+        )
+
+        axes[1].set_ylabel("Queue / traffic percentage")
+        axes[1].legend()
+        axes[1].grid(True)
+
+        axes[2].plot(
+            times,
+            series("licenseIPCount"),
+            marker="o",
+            label="Licensed IP count"
+        )
+
+        axes[2].plot(
+            times,
+            series("subnets"),
+            marker="x",
+            label="Subnets"
+        )
+
+        axes[2].set_ylabel("Count")
+        axes[2].set_xlabel(
+            "Darktrace server time (UTC)"
+        )
+        axes[2].legend()
+        axes[2].grid(True)
+
+        fig.autofmt_xdate()
+        fig.tight_layout(rect=[0, 0, 1, 0.96])
+
+        pdf.savefig(
+            fig,
+            dpi=150,
+            bbox_inches="tight"
+        )
+
+        plt.close(fig)
+
+        # ========================================================
+        # Additional pages: One page for each probe
+        # ========================================================
+
+        marker_list = [
+            "o",
+            "x",
+            "+",
+            "s",
+            "^",
+            "v",
+            "D"
+        ]
+
+        for probe_index in probe_indices:
+            fig, ax = plt.subplots(
+                1,
+                1,
+                figsize=(12, 7)
+            )
+
+            hostname_field = (
+                f"probes[{probe_index}].hostname"
+            )
+
+            probe_hostnames = text_series(hostname_field)
+
+            if probe_hostnames:
+                probe_hostname = probe_hostnames[-1]
+            else:
+                probe_hostname = f"Probe {probe_index}"
+
+            fig.suptitle(
+                f"{probe_hostname} /status history"
+            )
+
+            lines_added = 0
+
+            for interface_number in range(1, 8):
+                field_name = (
+                    f"probes[{probe_index}]."
+                    f"networkInterfacesReceived_eth"
+                    f"{interface_number}"
+                )
+
+                interface_values = series(field_name)
+
+                # Do not add an empty line if the CSV contains
+                # no numeric values for this interface.
+                if not has_numeric_data(interface_values):
+                    continue
+
+                ax.plot(
+                    times,
+                    interface_values,
+                    marker=marker_list[
+                        interface_number - 1
+                    ],
+                    label=f"eth{interface_number}"
+                )
+
+                lines_added += 1
+
+            ax.set_ylabel("Received data")
+            ax.set_xlabel(
+                "Darktrace server time (UTC)"
+            )
+            ax.grid(True)
+
+            if lines_added > 0:
+                ax.legend()
+            else:
+                ax.text(
+                    0.5,
+                    0.5,
+                    "No received-data values were found",
+                    horizontalalignment="center",
+                    verticalalignment="center",
+                    transform=ax.transAxes
+                )
+
+            fig.autofmt_xdate()
+            fig.tight_layout(rect=[0, 0, 1, 0.94])
+
+            pdf.savefig(
+                fig,
+                dpi=150,
+                bbox_inches="tight"
+            )
+
+            plt.close(fig)
+
+    print(f"Graph report saved to: {graph_path}")
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collect Darktrace /status metrics into CSV and graph them")
-    parser.add_argument("--host", default=os.getenv("DARKTRACE_HOST"))
-    parser.add_argument("--public-token", default=os.getenv("DARKTRACE_PUBLIC_TOKEN"))
-    parser.add_argument("--private-token", default=os.getenv("DARKTRACE_PRIVATE_TOKEN"))
-    parser.add_argument("--csv", type=Path, default=Path("darktrace_status.csv"))
-    parser.add_argument("--graph", type=Path, default=Path("darktrace_status.png"))
-    parser.add_argument("--timeout", type=float, default=30.0)
-    parser.add_argument("--insecure", action="store_true", help="Disable TLS certificate verification (not recommended)")
+    parser.add_argument("--api")
+    parser.add_argument("--host")
+    parser.add_argument("--public_token")
+    parser.add_argument("--private_token")
     return parser.parse_args()
 
+def read_json_file(jsonfilename: str) -> dict[str, Any]:
+    with open(jsonfilename, "r", encoding="utf-8") as f:
+        data = json.load(f)
+        row = extract_row(data)
+    return row
 
 def main() -> int:
-    args = parse_args()
-    missing = [
-        name
-        for name, value in (
-            ("DARKTRACE_HOST/--host", args.host),
-            ("DARKTRACE_PUBLIC_TOKEN/--public-token", args.public_token),
-            ("DARKTRACE_PRIVATE_TOKEN/--private-token", args.private_token),
-        )
-        if not value
-    ]
-    if missing:
-        print("Missing required configuration: " + ", ".join(missing), file=sys.stderr)
-        return 2
+    if len(sys.argv) != 3:
+        # result=get_dartrace_status
+        args=parse_args()
+        print(args)
+        missing = [
+            name
+            for name, value in (
+                ("DARKTRACE_API/--api",args.api),
+                ("DARKTRACE_HOST/--host",args.host),
+                ("DARKTRACE_PUBLIC_TOKEN/--public-token",args.public_token),
+                ("DARKTRACE_PRIVATE_TOKEN/--priovate-token",args.private_token),
+            )
+            if not value
+        ]
+        if missing:
+            print("Missing required configuration: "+", ".join(missing), file=sys.stderr)
+            return 2
+#       data = get_status(
+#             args.host,
+#             args.public_token,
+#             args.private_token,
+#             veryfy_ssl=not args.insecure,
+#             timeout=args.timeout,
+#       )
+#       row = extract_row(data)
 
+    elif sys.argv[1] == "--file":
+        jsonfilename = sys.argv[2]
+        row = read_json_file(jsonfilename)
     try:
-        data = get_status(
-            args.host,
-            args.public_token,
-            args.private_token,
-            verify_ssl=not args.insecure,
-            timeout=args.timeout,
-        )
-        row = extract_row(data)
-        append_csv(args.csv, row)
-        create_graph(args.csv, args.graph)
+        csvfile = "dist/sampledata1.csv"
+        csvpath = Path(csvfile)
+        graphfile="graph/samplegraph.pdf"
+        graphpath = Path(graphfile)
+        append_csv(csvpath, row)
+        create_graph(csvpath, graphpath)
     except requests.RequestException as exc:
         print(f"Darktrace API request failed: {exc}", file=sys.stderr)
         return 1
@@ -234,10 +532,9 @@ def main() -> int:
         print(f"Processing failed: {exc}", file=sys.stderr)
         return 1
 
-    print(f"Appended status to {args.csv}")
-    print(f"Updated graph at {args.graph}")
+    print(f"Appended status to {csvpath }")
+    print(f"Updated graph at {graphpath}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
