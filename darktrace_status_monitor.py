@@ -490,7 +490,7 @@ def read_json_file(jsonfilename: str) -> dict[str, Any]:
     return data
 
 def main() -> int:
-    if len(sys.argv) != 4:
+    if len(sys.argv) == 5:
         # result=get_dartrace_status
         args=parse_args()
         print(args)
