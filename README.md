@@ -1,5 +1,34 @@
 # Darktrace status CSV collector
 
+## Prerequite
+python3 -m pip list
+Package             Version
+------------------- -----------
+altgraph            0.17.2
+certifi             2026.7.22
+charset-normalizer  3.5.1
+contourpy           1.3.0
+cycler              0.12.1
+fonttools           4.60.2
+future              0.18.2
+idna                3.20
+importlib_resources 6.5.2
+kiwisolver          1.4.7
+macholib            1.15.2
+matplotlib          3.9.4
+numpy               2.0.2
+packaging           26.3
+pillow              11.3.0
+pip                 21.2.4
+pyparsing           3.3.2
+python-dateutil     2.9.0.post0
+requests            2.32.5
+setuptools          58.0.4
+six                 1.15.0
+urllib3             2.6.3
+wheel               0.37.0
+zipp                3.23.1
+
 `darktrace_status.py` queries a Darktrace appliance and appends one CSV row per
 network interface. Each row contains:
 
@@ -91,3 +120,7 @@ python3 -m unittest -v
 ## How to run the script
   python3 darktrace_status_monitor.py --api status --host http://localhost --public_token 123 --private_token 123
   python3 darktrace_status_monitor.py --file ../sampledata1.json 
+
+## Sample
+[!sample graph](graph/samplegraph.pdf)
+
