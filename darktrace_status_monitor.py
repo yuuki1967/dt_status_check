@@ -29,6 +29,8 @@ import math
 import re
 
 ENDPOINT = "/status?format=json"
+CSVFILE = "dist/sampledata1.csv"
+PDFFILE="graph/samplegraph.pdf"
 CSV_FIELDS = [
     "time",
     "hostname",
@@ -485,11 +487,10 @@ def parse_args() -> argparse.Namespace:
 def read_json_file(jsonfilename: str) -> dict[str, Any]:
     with open(jsonfilename, "r", encoding="utf-8") as f:
         data = json.load(f)
-        row = extract_row(data)
-    return row
+    return data
 
 def main() -> int:
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         # result=get_dartrace_status
         args=parse_args()
         print(args)
@@ -506,22 +507,26 @@ def main() -> int:
         if missing:
             print("Missing required configuration: "+", ".join(missing), file=sys.stderr)
             return 2
-#       data = get_status(
-#             args.host,
-#             args.public_token,
-#             args.private_token,
-#             veryfy_ssl=not args.insecure,
-#             timeout=args.timeout,
-#       )
+        
+        data = get_status(
+             args.host,
+             args.public_token,
+             args.private_token,
+             veryfy_ssl=not args.insecure,
+             timeout=args.timeout,
+        )
 #       row = extract_row(data)
 
     elif sys.argv[1] == "--file":
         jsonfilename = sys.argv[2]
-        row = read_json_file(jsonfilename)
+        data = read_json_file(jsonfilename)
+    else:
+       return 2 
     try:
-        csvfile = "dist/sampledata1.csv"
+        row = extract_row(data)
+        csvfile =f"{CSVFILE}" 
         csvpath = Path(csvfile)
-        graphfile="graph/samplegraph.pdf"
+        graphfile=f"{PDFFILE}"
         graphpath = Path(graphfile)
         append_csv(csvpath, row)
         create_graph(csvpath, graphpath)
