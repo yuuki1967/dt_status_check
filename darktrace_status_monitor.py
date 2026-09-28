@@ -28,7 +28,7 @@ import requests
 import math
 import re
 
-ENDPOINT = "/status?format=json"
+ENDPOINT = "/status?fast=true&includechildren=false"
 CSVFILE = "dist/sampledata1.csv"
 PDFFILE="graph/samplegraph.pdf"
 CSV_FIELDS = [
@@ -98,19 +98,47 @@ CSV_FIELDS = [
     "probes[6].networkInterfacesReceived_eth7",
 ]
 
+def generate_signature(
+    public_token,
+    private_token,
+    date_string,
+    endpoint,
+    ):
+
+    # Darktrace HMAC-SHA1 signature generation 
+    # Format commonly used by Darktrace
+    string_to_sign = (
+        endpoint + 
+        '\n' +
+        public_token +
+        '\n' +
+        date_string 
+    )
+
+    signature = hmac.new(
+        private_token.encode("ASCII"),
+        string_to_sign.encode("ASCII"),
+        hashlib.sha1,
+    ).hexdigest()
+
+    return signature
 
 def build_headers(endpoint: str, public_token: str, private_token: str) -> dict[str, str]:
     """Build the Darktrace DTAPI HMAC-SHA1 authentication headers."""
-    request_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-    auth_string = f"{endpoint}\n{public_token}\n{request_time}\n"
-    signature = hmac.new(
-        private_token.encode("utf-8"),
-        auth_string.encode("utf-8"),
-        hashlib.sha1,
-    ).hexdigest()
+    dtapi_date = datetime.now(
+        timezone.utc
+    ).strftime("%Y-%m-%d %H:%M:%S")
+    
+    signature = generate_signature(
+        public_token,
+        private_token,
+        dtapi_date,
+        endpoint,
+    )
+    print(signature)  
     return {
         "DTAPI-Token": public_token,
-        "DTAPI-Date": request_time,
+        "DTAPI-Date": dtapi_date,
         "DTAPI-Signature": signature,
         "Accept": "application/json",
     }
@@ -120,14 +148,12 @@ def get_status(
     public_token: str,
     private_token: str,
     verify_ssl: bool,
-    timeout: float,
 ) -> dict[str, Any]:
-    host = host.rstrip("/")
+#    host = host.rstrip("/")
     headers = build_headers(ENDPOINT, public_token, private_token)
     response = requests.get(
         f"{host}{ENDPOINT}",
         headers=headers,
-        timeout=timeout,
         verify=verify_ssl,
     )
     response.raise_for_status()
@@ -490,7 +516,7 @@ def read_json_file(jsonfilename: str) -> dict[str, Any]:
     return data
 
 def main() -> int:
-    if len(sys.argv) == 5:
+    if sys.argv[1] == "--api":
         # result=get_dartrace_status
         args=parse_args()
         print(args)
@@ -512,16 +538,17 @@ def main() -> int:
              args.host,
              args.public_token,
              args.private_token,
-             veryfy_ssl=not args.insecure,
-             timeout=args.timeout,
+             False,
         )
+        print("data",data)
 #       row = extract_row(data)
 
     elif sys.argv[1] == "--file":
         jsonfilename = sys.argv[2]
         data = read_json_file(jsonfilename)
     else:
-       return 2 
+        print("ERROR") 
+        return 2 
     try:
         row = extract_row(data)
         csvfile =f"{CSVFILE}" 
