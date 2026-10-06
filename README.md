@@ -123,5 +123,5 @@ python3 -m unittest -v
   python3 darktrace_status_monitor.py --file ../sampledata1.json 
 
 ## Sample
-![sample graph](graph/samplegraph.pdf)
+<img src="graph/samplegraph.pdf">
 
