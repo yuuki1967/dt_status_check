@@ -28,7 +28,7 @@ import requests
 import math
 import re
 
-ENDPOINT = "/status?fast=true&includechildren=false"
+ENDPOINT = "/status?format=json"
 CSVFILE = "dist/sampledata1.csv"
 PDFFILE="graph/samplegraph.pdf"
 CSV_FIELDS = [
